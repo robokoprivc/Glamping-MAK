@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "A reservation for a glamping unit.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who made the booking." },
+        "unit": { "type": "string", "description": "The name of the glamping unit." },
+        "dates": { "type": "array", "items": { "type": "integer" }, "description": "The days of the month booked." },
+        "guestName": { "type": "string", "description": "The name of the guest." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the booking was created." }
+      },
+      "required": ["userId", "unit", "dates", "guestName", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["user", "admin"] }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Collection of all bookings."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles."
+    }
+  }
+}

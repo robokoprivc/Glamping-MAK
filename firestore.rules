@@ -1,0 +1,62 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: bookings
+// Document ID: auto-generated
+// Fields:
+//   - userId: string (required) - UID of the user
+//   - unit: string (required) - Name of the unit
+//   - dates: list (required) - Array of days booked
+//   - guestName: string (required) - Name of the guest
+//   - createdAt: timestamp (required) - Creation time
+//
+// Collection: users
+// Document ID: userId
+// Fields:
+//   - uid: string (required)
+//   - email: string (required)
+//   - role: string (required) - 'user' or 'admin'
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "koprivctim@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidBooking(data) {
+      return data.userId is string &&
+             data.unit is string &&
+             data.dates is list &&
+             data.guestName is string &&
+             data.guestName.size() < 100 &&
+             data.createdAt is string;
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if true; // Publicly readable to show availability
+      allow create: if isAuthenticated() && isValidBooking(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId && request.resource.data.role == 'user';
+      allow update: if isAdmin();
+    }
+  }
+}
